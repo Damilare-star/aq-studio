@@ -65,20 +65,21 @@ export default function LoadingScreen() {
     <AnimatePresence>
       {phase !== 'done' && (
         <motion.div
-          className="fixed inset-0 z-[99999] bg-black flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[99999] bg-black overflow-hidden"
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
-          {/* Video — fades in */}
+          {/* Video — true fullscreen cover on all screen sizes */}
           <motion.video
             ref={videoRef}
             src="/videos/aq-intro.mp4"
             muted
             playsInline
             preload="auto"
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full"
+            style={{ objectFit: 'cover', objectPosition: 'center center' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: phase === 'exit' ? 0 : 1 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
