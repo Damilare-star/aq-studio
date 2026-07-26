@@ -10,18 +10,18 @@ export default function LoadingScreen() {
     const video = videoRef.current
     if (!video) return
 
-    // Max 6s fallback
+    // Max 8s fallback
     timerRef.current = setTimeout(() => {
       setPhase('exit')
       setTimeout(() => setPhase('done'), 800)
-    }, 6000)
+    }, 8000)
 
     const onEnded = () => {
       clearTimeout(timerRef.current)
       setTimeout(() => {
         setPhase('exit')
         setTimeout(() => setPhase('done'), 800)
-      }, 400)
+      }, 300)
     }
 
     const onError = () => {
@@ -33,6 +33,7 @@ export default function LoadingScreen() {
     video.addEventListener('ended', onEnded)
     video.addEventListener('error', onError)
 
+    // Play once — no loop
     video.play().catch(() => {
       clearTimeout(timerRef.current)
       setTimeout(() => {
@@ -60,88 +61,35 @@ export default function LoadingScreen() {
     <AnimatePresence>
       <motion.div
         key="loading"
-        className="fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center"
+        className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
         exit={{ opacity: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Ambient glow behind card */}
-        <div
-          className="absolute pointer-events-none"
+        {/* Video plays once at natural size — readable, centered */}
+        <motion.video
+          ref={videoRef}
+          src="/videos/aq-intro.mp4"
+          muted
+          playsInline
+          preload="auto"
+          // NO loop — plays once only
+          initial={{ opacity: 0 }}
+          animate={{ opacity: phase === 'exit' ? 0 : 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
           style={{
-            width: 400,
-            height: 400,
-            background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)',
-            filter: 'blur(40px)',
+            display: 'block',
+            width: 'min(800px, 92vw)',
+            height: 'auto',
           }}
         />
-
-        {/* Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.88, y: 20 }}
-          animate={{
-            opacity: phase === 'exit' ? 0 : 1,
-            scale: phase === 'exit' ? 0.94 : 1,
-            y: phase === 'exit' ? -16 : 0,
-          }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-2xl border border-white/10"
-          style={{
-            width: 220,
-            boxShadow: '0 0 50px rgba(139,92,246,0.3), 0 20px 60px rgba(0,0,0,0.6)',
-          }}
-        >
-          {/* Video — 100px tall */}
-          <video
-            ref={videoRef}
-            src="/videos/aq-intro.mp4"
-            muted
-            playsInline
-            preload="auto"
-            style={{
-              display: 'block',
-              width: '100%',
-              height: 100,
-              objectFit: 'cover',
-              objectPosition: 'center center',
-            }}
-          />
-
-          {/* Text strip — 50px tall */}
-          <div
-            className="flex items-center justify-center border-t border-white/10"
-            style={{
-              height: 50,
-              background: 'rgba(0,0,0,0.85)',
-              backdropFilter: 'blur(12px)',
-            }}
-          >
-            <span
-              className="font-heading font-bold text-xs uppercase"
-              style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.85)' }}
-            >
-              THE{' '}
-              <span
-                style={{
-                  background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                AQ
-              </span>{' '}
-              STUDIO
-            </span>
-          </div>
-        </motion.div>
 
         {/* Skip button */}
         <motion.button
           initial={{ opacity: 0 }}
-          animate={{ opacity: phase === 'exit' ? 0 : 0.6 }}
+          animate={{ opacity: phase === 'exit' ? 0 : 0.55 }}
           transition={{ delay: 1.5, duration: 0.4 }}
           onClick={skip}
-          className="absolute bottom-8 right-8 flex items-center gap-2 px-4 py-2 rounded-full text-white/50 hover:text-white text-xs font-medium transition-colors border border-white/10 hover:border-white/30"
-          style={{ background: 'rgba(255,255,255,0.04)' }}
+          className="absolute bottom-8 right-8 flex items-center gap-2 px-4 py-2 rounded-full text-white/55 hover:text-white text-xs font-medium transition-all border border-white/10 hover:border-white/30"
         >
           Skip
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

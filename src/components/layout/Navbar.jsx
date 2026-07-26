@@ -45,13 +45,18 @@ export default function Navbar() {
         }`}
       >
         <div className="container-custom flex items-center justify-between">
-          {/* Logo */}
+          {/* Logo — plays once, freezes on last frame */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow-sm">
-              <span className="text-white font-heading font-bold text-sm">AQ</span>
-            </div>
+            <video
+              src="/videos/aq-intro.mp4"
+              autoPlay
+              muted
+              playsInline
+              className="rounded-lg"
+              style={{ width: 44, height: 44, objectFit: 'cover' }}
+            />
             <span className="font-heading font-bold text-lg tracking-tight">
-              <span className="gradient-text">Studio</span>
+              <span className="gradient-text">AQ Studio</span>
             </span>
           </Link>
           {/* Desktop Nav */}
