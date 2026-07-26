@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-/**
- * Cinematic intro sequence using aq-intro.mp4:
- * 1. Black screen
- * 2. Video fades in and plays (muted)
- * 3. When video ends (or after max 5s) — fade out
- * 4. Hero reveals underneath
- */
 export default function LoadingScreen() {
   const [phase, setPhase] = useState('video') // video | exit | done
   const videoRef = useRef(null)
@@ -17,7 +10,7 @@ export default function LoadingScreen() {
     const video = videoRef.current
     if (!video) return
 
-    // Fallback: force exit after 6 seconds max
+    // Max 6s fallback
     timerRef.current = setTimeout(() => {
       setPhase('exit')
       setTimeout(() => setPhase('done'), 800)
@@ -25,7 +18,6 @@ export default function LoadingScreen() {
 
     const onEnded = () => {
       clearTimeout(timerRef.current)
-      // Brief pause after video ends, then exit
       setTimeout(() => {
         setPhase('exit')
         setTimeout(() => setPhase('done'), 800)
@@ -33,7 +25,6 @@ export default function LoadingScreen() {
     }
 
     const onError = () => {
-      // If video fails to load, exit gracefully
       clearTimeout(timerRef.current)
       setPhase('exit')
       setTimeout(() => setPhase('done'), 600)
@@ -42,9 +33,7 @@ export default function LoadingScreen() {
     video.addEventListener('ended', onEnded)
     video.addEventListener('error', onError)
 
-    // Try to play
     video.play().catch(() => {
-      // Autoplay blocked — exit after short delay
       clearTimeout(timerRef.current)
       setTimeout(() => {
         setPhase('exit')
@@ -59,75 +48,108 @@ export default function LoadingScreen() {
     }
   }, [])
 
+  const skip = () => {
+    clearTimeout(timerRef.current)
+    setPhase('exit')
+    setTimeout(() => setPhase('done'), 800)
+  }
+
   if (phase === 'done') return null
 
   return (
     <AnimatePresence>
-      {phase !== 'done' && (
+      <motion.div
+        key="loading"
+        className="fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center"
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {/* Ambient glow behind card */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: 400,
+            height: 400,
+            background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)',
+            filter: 'blur(40px)',
+          }}
+        />
+
+        {/* Card */}
         <motion.div
-          className="fixed inset-0 z-[99999] bg-black overflow-hidden"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, scale: 0.88, y: 20 }}
+          animate={{
+            opacity: phase === 'exit' ? 0 : 1,
+            scale: phase === 'exit' ? 0.94 : 1,
+            y: phase === 'exit' ? -16 : 0,
+          }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative overflow-hidden rounded-2xl border border-white/10"
+          style={{
+            width: 220,
+            boxShadow: '0 0 50px rgba(139,92,246,0.3), 0 20px 60px rgba(0,0,0,0.6)',
+          }}
         >
-          {/* Video — true fullscreen cover on all screen sizes */}
-          <motion.video
+          {/* Video — 100px tall */}
+          <video
             ref={videoRef}
             src="/videos/aq-intro.mp4"
             muted
             playsInline
             preload="auto"
-            className="absolute inset-0 w-full h-full"
-            style={{ objectFit: 'cover', objectPosition: 'center center' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: phase === 'exit' ? 0 : 1 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-          />
-
-          {/* Subtle vignette overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
             style={{
-              background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%)',
+              display: 'block',
+              width: '100%',
+              height: 100,
+              objectFit: 'cover',
+              objectPosition: 'center center',
             }}
           />
 
-          {/* Skip button — appears after 1.5s */}
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: phase === 'exit' ? 0 : 1 }}
-            transition={{ delay: 1.5, duration: 0.4 }}
-            onClick={() => {
-              clearTimeout(timerRef.current)
-              setPhase('exit')
-              setTimeout(() => setPhase('done'), 800)
+          {/* Text strip — 50px tall */}
+          <div
+            className="flex items-center justify-center border-t border-white/10"
+            style={{
+              height: 50,
+              background: 'rgba(0,0,0,0.85)',
+              backdropFilter: 'blur(12px)',
             }}
-            className="absolute bottom-8 right-8 flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-white/5 backdrop-blur-sm text-white/60 hover:text-white hover:border-white/40 text-xs font-medium transition-all duration-300"
           >
-            Skip
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 2l8 4-8 4V2z" fill="currentColor"/>
-              <line x1="10" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </motion.button>
-
-          {/* AQ Studio watermark bottom-left */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: phase === 'exit' ? 0 : 0.7 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-            className="absolute bottom-8 left-8 flex items-center gap-2"
-          >
-            <div className="w-6 h-6 rounded-md bg-gradient-primary flex items-center justify-center">
-              <span className="text-white font-heading font-bold text-xs">AQ</span>
-            </div>
-            <span className="text-white/60 text-xs font-heading font-semibold tracking-widest uppercase">
-              AQ Studio
+            <span
+              className="font-heading font-bold text-xs uppercase"
+              style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.85)' }}
+            >
+              THE{' '}
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                AQ
+              </span>{' '}
+              STUDIO
             </span>
-          </motion.div>
+          </div>
         </motion.div>
-      )}
+
+        {/* Skip button */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: phase === 'exit' ? 0 : 0.6 }}
+          transition={{ delay: 1.5, duration: 0.4 }}
+          onClick={skip}
+          className="absolute bottom-8 right-8 flex items-center gap-2 px-4 py-2 rounded-full text-white/50 hover:text-white text-xs font-medium transition-colors border border-white/10 hover:border-white/30"
+          style={{ background: 'rgba(255,255,255,0.04)' }}
+        >
+          Skip
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 2l8 4-8 4V2z" fill="currentColor" />
+            <line x1="10" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </motion.button>
+      </motion.div>
     </AnimatePresence>
   )
 }
